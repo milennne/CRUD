@@ -5,6 +5,8 @@ const { Pool } = require('pg');
 
 const app = express();
 
+
+
 // Middlewares
 app.use(cors()); // Para permitir llamadas desde distintos orígenes
 app.use(express.json()); // Permite capturar el body en formato JSON
@@ -16,6 +18,23 @@ const pool = new Pool({
         rejectUnauthorized: false // Esencial para conexiones SSL externas de Render Postgres
     }
 });
+
+const initDB = async () => {
+    try {
+        await pool.query(`
+            CREATE TABLE IF NOT EXISTS usuarios (
+                id SERIAL PRIMARY KEY,
+                nombre TEXT NOT NULL,
+                email TEXT NOT NULL,
+                telefono TEXT,
+                edad INTEGER
+            )
+        `);
+        console.log('Tabla usuarios lista ✅');
+    } catch (err) {
+        console.error('Error al crear tabla:', err.message);
+    }
+};
 
 app.get('/', (req, res) => {
     res.json({ message: "API de Usuarios operativa. Lista para testear en Postman." });
@@ -96,6 +115,8 @@ app.delete('/usuarios/:id', async (req, res) => {
 });
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, '0.0.0.0', () => {
-    console.log(`Servidor de API iniciado y escuchando en el puerto ${PORT}`);
+initDB().then(() => {
+    app.listen(PORT, '0.0.0.0', () => {
+        console.log(`Servidor de API iniciado y escuchando en el puerto ${PORT}`);
+    });
 });
